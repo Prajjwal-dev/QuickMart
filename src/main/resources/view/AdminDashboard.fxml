@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.AdminDashboardController">
+    <!-- Top Navbar -->
+    <top>
+        <HBox spacing="20" style="-fx-background-color: linear-gradient(to right, #4258d0, #c950c1); -fx-padding: 10;">
+            <Button fx:id="hamburgerButton" style="-fx-font-size: 22; -fx-background-color: transparent; -fx-text-fill: white; -fx-font-family: 'Poppins';" text="☰" />
+            <ImageView fx:id="logoImageView" fitHeight="50.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true" style="-fx-padding: 0 8 0 0;" />
+            <Label style="-fx-font-family: 'Poppins'; -fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: white;" text="QuickMart" />
+            <Region fx:id="spacer" HBox.hgrow="ALWAYS" />
+            <HBox alignment="CENTER_RIGHT" spacing="10">
+                <ImageView fx:id="profileImageView" fitHeight="40" fitWidth="40" />
+                <VBox alignment="CENTER_LEFT">
+                    <Label fx:id="usernameLabel" style="-fx-font-family: 'Roboto'; -fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: white;" />
+                    <Label fx:id="roleLabel" style="-fx-font-family: 'Roboto'; -fx-font-size: 13; -fx-text-fill: #eebbc3;" />
+                </VBox>
+            <Circle fill="#00ff1e" radius="7.0" stroke="BLACK" strokeType="INSIDE" />
+                <Button fx:id="logoutButton" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: #eebbc3; -fx-text-fill: #232946; -fx-background-radius: 8;" text="Log Out" />
+            </HBox>
+        </HBox>
+    </top>
+
+    <!-- Left Sidebar (initially hidden, toggled by hamburger) -->
+    <left>
+        <VBox fx:id="sidebar" managed="false" spacing="10" style="-fx-background-color: #232946; -fx-padding: 10;" visible="false">
+            <Button fx:id="dashboardBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-cursor: hand;" text="Dashboard">
+                <style>
+                    .button:hover {
+                        -fx-background-color: #eebbc3;
+                        -fx-text-fill: #232946;
+                        -fx-scale-x: 1.05;
+                        -fx-scale-y: 1.05;
+                    }
+                    .button:pressed {
+                        -fx-background-color: #c950c1;
+                        -fx-text-fill: white;
+                        -fx-scale-x: 0.95;
+                        -fx-scale-y: 0.95;
+                    }
+                </style>
+            </Button>
+            <Button fx:id="inventoryBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-cursor: hand;" text="Inventory Management">
+                <style>
+                    .button:hover {
+                        -fx-background-color: #eebbc3;
+                        -fx-text-fill: #232946;
+                        -fx-scale-x: 1.05;
+                        -fx-scale-y: 1.05;
+                    }
+                    .button:pressed {
+                        -fx-background-color: #c950c1;
+                        -fx-text-fill: white;
+                        -fx-scale-x: 0.95;
+                        -fx-scale-y: 0.95;
+                    }
+                </style>
+            </Button>
+                <Button fx:id="settingsBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-cursor: hand;" text="Settings">
+                    <style>
+                        .button:hover {
+                            -fx-background-color: #eebbc3;
+                            -fx-text-fill: #232946;
+                            -fx-scale-x: 1.05;
+                            -fx-scale-y: 1.05;
+                        }
+                        .button:pressed {
+                            -fx-background-color: #c950c1;
+                            -fx-text-fill: white;
+                            -fx-scale-x: 0.95;
+                            -fx-scale-y: 0.95;
+                        }
+                    </style>
+                </Button>
+                <Button fx:id="salesReportBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-cursor: hand;" text="Sales Report">
+                    <style>
+                        .button:hover {
+                            -fx-background-color: #eebbc3;
+                            -fx-text-fill: #232946;
+                            -fx-scale-x: 1.05;
+                            -fx-scale-y: 1.05;
+                        }
+                        .button:pressed {
+                            -fx-background-color: #c950c1;
+                            -fx-text-fill: white;
+                            -fx-scale-x: 0.95;
+                            -fx-scale-y: 0.95;
+                        }
+                    </style>
+                </Button>
+            <Button fx:id="customerBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-cursor: hand;" text="Customer Management">
+                <style>
+                    .button:hover {
+                        -fx-background-color: #eebbc3;
+                        -fx-text-fill: #232946;
+                        -fx-scale-x: 1.05;
+                        -fx-scale-y: 1.05;
+                    }
+                    .button:pressed {
+                        -fx-background-color: #c950c1;
+                        -fx-text-fill: white;
+                        -fx-scale-x: 0.95;
+                        -fx-scale-y: 0.95;
+                    }
+                </style>
+            </Button>
+            <!-- Guidelines / Privacy / About pre-defined so controller can lookup by id and style consistently -->
+            <Button fx:id="guidelineBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: #0026fd;
+ -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;" text="Guidelines">
+                <style>.button: hover { -fx-opacity: 0.95; -fx-background-color: #3498db;</style>
+            </Button>
+            <Button fx:id="privacyBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: linear-gradient(#fff89c, #ffd700);
+ -fx-text-fill:#2b2b2b; -fx-background-radius: 8; -fx-cursor: hand;" text="Privacy Policy">
+                <style>
+                    .button:hover { -fx-opacity: 0.95; }
+                </style>
+            </Button>
+            <Button fx:id="aboutBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: linear-gradient(#d8a8ff, #800080);
+ -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand;" text="About Us">
+                <style>
+                    .button:hover { -fx-opacity: 0.95; }
+                </style>
+            </Button>
+            <!-- removed duplicate Sales Report button -->
+            <Button fx:id="cashierBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: linear-gradient(#ff9a9a, #ff0000);
+ -fx-text-fill: #232946; -fx-background-radius: 8; -fx-cursor: hand;" text="Cashier Management">
+                <style>
+                    .button:hover {
+                        -fx-background-color: #eebbc3;
+                        -fx-text-fill: #232946;
+                        -fx-scale-x: 1.05;
+                        -fx-scale-y: 1.05;
+                    }
+                    .button:pressed {
+                        -fx-background-color: #c950c1;
+                        -fx-text-fill: white;
+                        -fx-scale-x: 0.95;
+                        -fx-scale-y: 0.95;
+                    }
+                </style>
+            </Button>
+            <!-- removed duplicate Settings button -->
+            <Button fx:id="exitBtn" style="-fx-font-family: 'Poppins'; -fx-font-size: 15; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-cursor: hand;" text="Exit">
+                <style>
+                    .button:hover {
+                        -fx-background-color: #eebbc3;
+                        -fx-text-fill: #232946;
+                        -fx-scale-x: 1.05;
+                        -fx-scale-y: 1.05;
+                    }
+                    .button:pressed {
+                        -fx-background-color: #c950c1;
+                        -fx-text-fill: white;
+                        -fx-scale-x: 0.95;
+                        -fx-scale-y: 0.95;
+                    }
+                </style>
+            </Button>
+        </VBox>
+    </left>
+   <center>
+        <StackPane fx:id="mainContent" BorderPane.alignment="CENTER">
+            <Label style="-fx-font-family: 'Poppins'; -fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #232946;" text="Welcome to Admin Dashboard" />
+        </StackPane>
+   </center>
+    <!-- Dashboard content is rendered programmatically in the controller when the Dashboard button is clicked -->
+</BorderPane>

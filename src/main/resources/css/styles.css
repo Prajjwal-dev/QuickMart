@@ -1,0 +1,51 @@
+/* Global styles: fonts and button animations */
+.root {
+    -fx-font-family: 'Poppins', 'Roboto', 'Montserrat', sans-serif;
+}
+.button {
+    -fx-cursor: hand;
+    -fx-transition: all 150ms ease-in-out;
+}
+.button:hover {
+    -fx-scale-x: 1.04;
+    -fx-scale-y: 1.04;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 6, 0, 0, 2);
+}
+.button:pressed {
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+.table-view {
+    -fx-font-family: 'Roboto', 'Poppins', sans-serif;
+}
+
+/* Theme colors */
+:root {
+    -primary: #4258d0;
+    -accent: #eebbc3;
+    -muted: #b8c1ec;
+    -bg: #f4f4f9;
+    -text: #232946;
+}
+
+.btn-primary {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #4b6ef6, #4258d0);
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16 8 16;
+}
+.btn-muted {
+    -fx-background-color: -accent;
+    -fx-text-fill: -text;
+    -fx-background-radius: 8;
+    -fx-padding: 6 12 6 12;
+}
+
+.dashboard-scrollpane {
+    -fx-background: transparent;
+}
+
+/* Utility to make tables use full width */
+.fill-width {
+    -fx-pref-width: 100%;
+}
