@@ -463,7 +463,11 @@ public class AdminDashboardController {
     Button custCsv = new Button("Export CSV");
     Button custPdf = new Button("Export PDF");
     Button custXlsx = new Button("Export XLSX");
-    topActions.getChildren().addAll(custCsv, custPdf, custXlsx);
+    // add a Refresh button (circular '⟲') to reload customers and reset the search box
+    Button refreshCust = new Button("⟲");
+    refreshCust.setStyle("-fx-font-size: 16; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-font-family: 'Poppins';");
+    refreshCust.setOnAction(ev -> { try { searchField.clear(); searchField.requestFocus(); } catch (Exception ignored) {} showCustomerManagement(); });
+    topActions.getChildren().addAll(custCsv, custPdf, custXlsx, refreshCust);
 
         TableView<Customer> table = new TableView<>();
     applyTableStyling(table);
@@ -600,18 +604,22 @@ public class AdminDashboardController {
         box.setStyle("-fx-padding: 30; -fx-background-color: #fff; -fx-background-radius: 12;");
         box.setAlignment(javafx.geometry.Pos.TOP_CENTER);
 
-    HBox top = new HBox(12); top.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        HBox top = new HBox(12); top.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
     TextField q = new TextField(); q.setPromptText("Search users..."); q.setStyle("-fx-pref-width:260; -fx-font-size:14;");
     // autocomplete suggestions for username search
     javafx.scene.control.ContextMenu suggestions = new javafx.scene.control.ContextMenu();
         Button add = new Button("Add User"); add.setStyle("-fx-background-color:#6fa8ff; -fx-text-fill:#fff; -fx-background-radius:8;");
         Button expCsv = new Button("Export CSV"); Button expPdf = new Button("Export PDF"); Button expXlsx = new Button("Export XLSX");
-        top.getChildren().addAll(q, add, expCsv, expPdf, expXlsx);
+    Button refreshUsers = new Button("⟲");
+    refreshUsers.setStyle("-fx-font-size: 16; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-font-family: 'Poppins';");
+    refreshUsers.setOnAction(ev -> { try { q.clear(); q.requestFocus(); } catch (Exception ignored) {} showUserManagement(); });
+        top.getChildren().addAll(q, add, refreshUsers, expCsv, expPdf, expXlsx);
 
         TableView<java.util.Map<String,Object>> table = new TableView<>(); applyTableStyling(table); table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        TableColumn<java.util.Map<String,Object>, String> cid = new TableColumn<>("ID"); cid.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("id"))));
-        TableColumn<java.util.Map<String,Object>, String> uname = new TableColumn<>("Username"); uname.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("username"))));
-        TableColumn<java.util.Map<String,Object>, String> urole = new TableColumn<>("Role"); urole.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("role"))));
+    TableColumn<java.util.Map<String,Object>, String> cid = new TableColumn<>("ID"); cid.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("id"))));
+    TableColumn<java.util.Map<String,Object>, String> uname = new TableColumn<>("Username"); uname.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("username"))));
+    TableColumn<java.util.Map<String,Object>, String> upwd = new TableColumn<>("Password"); upwd.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("password"))));
+    TableColumn<java.util.Map<String,Object>, String> urole = new TableColumn<>("Role"); urole.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("role"))));
         TableColumn<java.util.Map<String,Object>, Void> ops = new TableColumn<>("Actions");
         ops.setCellFactory(p -> new TableCell<java.util.Map<String,Object>, Void>() {
             private final Button upd = new Button("Update");
@@ -633,20 +641,24 @@ public class AdminDashboardController {
             @Override protected void updateItem(Void v, boolean empty) { super.updateItem(v, empty); setGraphic(empty?null:hb); }
         });
     javafx.collections.ObservableList<javafx.scene.control.TableColumn<java.util.Map<String,Object>, ?>> colList = javafx.collections.FXCollections.observableArrayList();
-    colList.add(cid); colList.add(uname); colList.add(urole); colList.add(ops);
+    colList.add(cid); colList.add(uname); colList.add(upwd); colList.add(urole); colList.add(ops);
     table.getColumns().setAll(colList);
 
         box.getChildren().addAll(top, table);
         mainContent.getChildren().setAll(createScrollable(box));
 
-        // load data
+        // load data (do not list admin accounts here)
         javafx.collections.ObservableList<java.util.Map<String,Object>> rows = javafx.collections.FXCollections.observableArrayList();
         try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
-            // do not list admin accounts here - they are restricted from User Management UI
-            java.sql.PreparedStatement ps = conn.prepareStatement("SELECT id, username, role FROM users WHERE role <> 'admin'");
+            java.sql.PreparedStatement ps = conn.prepareStatement("SELECT id, username, password, role FROM users WHERE role <> 'admin'");
             java.sql.ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                java.util.Map<String,Object> m = new java.util.HashMap<>(); m.put("id", rs.getString("id")); m.put("username", rs.getString("username")); m.put("role", rs.getString("role")); rows.add(m);
+                java.util.Map<String,Object> m = new java.util.HashMap<>();
+                m.put("id", rs.getString("id"));
+                m.put("username", rs.getString("username"));
+                m.put("password", rs.getString("password"));
+                m.put("role", rs.getString("role"));
+                rows.add(m);
             }
         } catch (Exception ex) { ex.printStackTrace(); }
         table.setItems(rows);
@@ -689,29 +701,69 @@ public class AdminDashboardController {
 
         // add user dialog
         add.setOnAction(ev -> showAddUserDialog(table));
-        expCsv.setOnAction(ev -> {
-            try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.File("users.csv"))) {
-                pw.println("id,username,role"); for (java.util.Map<String,Object> m : table.getItems()) pw.println(String.format("%s,%s,%s", m.get("id"), m.get("username"), m.get("role")));
-                showAlert("CSV exported to users.csv");
+            expCsv.setOnAction(ev -> {
+            try {
+                String out = util.InvoiceExporter.resolveAdminExportPath("users.csv");
+                try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.File(out))) {
+                    pw.println("id,username,password,role");
+                    for (java.util.Map<String,Object> m : table.getItems()) pw.println(String.format("%s,%s,%s,%s", m.get("id"), m.get("username"), m.get("password"), m.get("role")));
+                }
+                showAlert("CSV exported to " + new java.io.File(out).getAbsolutePath());
             } catch (Exception ex) { ex.printStackTrace(); showAlert("Export failed"); }
         });
-        expPdf.setOnAction(ev -> showAlert("PDF export not implemented for users (use CSV/XLSX)."));
-        expXlsx.setOnAction(ev -> showAlert("XLSX export not implemented for users (use CSV)."));
+            expPdf.setOnAction(ev -> {
+            // Build a Map-backed table and reuse exportTableToPdf, forcing admin export path
+            TableView<java.util.Map<String,Object>> m = new TableView<>();
+            TableColumn<java.util.Map<String,Object>, String> a = new TableColumn<>("ID"); a.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("id"))));
+            TableColumn<java.util.Map<String,Object>, String> b = new TableColumn<>("Username"); b.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("username"))));
+            TableColumn<java.util.Map<String,Object>, String> pwdCol = new TableColumn<>("Password"); pwdCol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("password"))));
+            TableColumn<java.util.Map<String,Object>, String> ccol = new TableColumn<>("Role"); ccol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("role"))));
+            java.util.List<javafx.scene.control.TableColumn<java.util.Map<String,Object>, String>> cols = new java.util.ArrayList<>();
+            cols.add(a); cols.add(b); cols.add(pwdCol); cols.add(ccol);
+            m.getColumns().setAll(cols);
+            javafx.collections.ObservableList<java.util.Map<String,Object>> mapRows = javafx.collections.FXCollections.observableArrayList();
+            for (java.util.Map<String,Object> entry : table.getItems()) {
+                java.util.Map<String,Object> mm = new java.util.HashMap<>();
+                mm.put("id", entry.get("id")); mm.put("username", entry.get("username")); mm.put("password", entry.get("password")); mm.put("role", entry.get("role"));
+                mapRows.add(mm);
+            }
+            m.setItems(mapRows);
+            exportTableToPdf(m, util.InvoiceExporter.resolveAdminExportPath("users.pdf"));
+        });
+            expXlsx.setOnAction(ev -> {
+            TableView<java.util.Map<String,Object>> m = new TableView<>();
+            TableColumn<java.util.Map<String,Object>, String> a = new TableColumn<>("ID"); a.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("id"))));
+            TableColumn<java.util.Map<String,Object>, String> b = new TableColumn<>("Username"); b.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("username"))));
+            TableColumn<java.util.Map<String,Object>, String> pwdCol2 = new TableColumn<>("Password"); pwdCol2.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("password"))));
+            TableColumn<java.util.Map<String,Object>, String> ccol = new TableColumn<>("Role"); ccol.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("role"))));
+            java.util.List<javafx.scene.control.TableColumn<java.util.Map<String,Object>, String>> cols2 = new java.util.ArrayList<>();
+            cols2.add(a); cols2.add(b); cols2.add(pwdCol2); cols2.add(ccol);
+            m.getColumns().setAll(cols2);
+            javafx.collections.ObservableList<java.util.Map<String,Object>> mapRows2 = javafx.collections.FXCollections.observableArrayList();
+            for (java.util.Map<String,Object> entry : table.getItems()) {
+                java.util.Map<String,Object> mm = new java.util.HashMap<>();
+                mm.put("id", entry.get("id")); mm.put("username", entry.get("username")); mm.put("password", entry.get("password")); mm.put("role", entry.get("role"));
+                mapRows2.add(mm);
+            }
+            m.setItems(mapRows2);
+            exportTableToXlsx(m, util.InvoiceExporter.resolveAdminExportPath("users.xlsx"));
+        });
     }
 
     private void showAddUserDialog(TableView<java.util.Map<String,Object>> table) {
         Stage s = new Stage(); s.setTitle("Add User"); VBox v = new VBox(8); v.setStyle("-fx-padding:12;");
-        TextField id = new TextField(); id.setPromptText("ID (eg U0001)");
         TextField user = new TextField(); user.setPromptText("Username");
         PasswordField pass = new PasswordField(); pass.setPromptText("Password");
     // disallow creating admin users from this UI
     javafx.scene.control.ComboBox<String> role = new javafx.scene.control.ComboBox<>(); role.getItems().addAll("cashier"); role.setValue("cashier");
         Button ok = new Button("Add"); Button cancel = new Button("Cancel");
-        v.getChildren().addAll(new Label("ID"), id, new Label("Username"), user, new Label("Password"), pass, new Label("Role"), role, new HBox(8, ok, cancel));
+        v.getChildren().addAll(new Label("Username"), user, new Label("Password"), pass, new Label("Role"), role, new HBox(8, ok, cancel));
         ok.setOnAction(e -> {
             try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
+                // auto-generate a user id (U + zero-padded 5 digit number)
+                String genId = "U" + String.format("%05d", new java.util.Random().nextInt(100000));
                 java.sql.PreparedStatement ps = conn.prepareStatement("INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)");
-                ps.setString(1, id.getText()); ps.setString(2, user.getText()); ps.setString(3, pass.getText()); ps.setString(4, role.getValue()); ps.executeUpdate();
+                ps.setString(1, genId); ps.setString(2, user.getText()); ps.setString(3, pass.getText()); ps.setString(4, role.getValue()); ps.executeUpdate();
                 s.close(); showUserManagement();
             } catch (Exception ex) { ex.printStackTrace(); new Alert(Alert.AlertType.ERROR, "Failed to add user").showAndWait(); }
         });
@@ -750,10 +802,16 @@ public class AdminDashboardController {
         Button ok = new Button("Add"); Button cancel = new Button("Cancel");
         v.getChildren().addAll(new Label("Name"), name, new Label("Phone"), phone, new HBox(8, ok, cancel));
         ok.setOnAction(e -> {
+            String phoneVal = phone.getText() == null ? "" : phone.getText().trim();
+            if (!phoneVal.matches("\\d{10}")) {
+                new Alert(Alert.AlertType.ERROR, "Phone number must be exactly 10 digits").showAndWait();
+                try { phone.requestFocus(); } catch (Exception ignored) {}
+                return;
+            }
             try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
                 String id = "C" + String.format("%05d", new java.util.Random().nextInt(100000));
                 java.sql.PreparedStatement ps = conn.prepareStatement("INSERT INTO customers (c_id, customer_name, phone_no) VALUES (?, ?, ?)");
-                ps.setString(1, id); ps.setString(2, name.getText()); ps.setString(3, phone.getText()); ps.executeUpdate();
+                ps.setString(1, id); ps.setString(2, name.getText()); ps.setString(3, phoneVal); ps.executeUpdate();
                 s.close();
                 showCustomerManagement();
             } catch (Exception ex) { ex.printStackTrace(); new Alert(Alert.AlertType.ERROR, "Failed to add customer").showAndWait(); }
@@ -820,7 +878,14 @@ public class AdminDashboardController {
     BarChart<String, Number> cashierBar = null;
 
     // start with title only; charts are added before KPI blocks so graphs appear first
-    home.getChildren().add(title);
+    // add a small refresh button to reload dashboard KPIs
+    HBox titleRow = new HBox(8);
+    titleRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+    Button refreshDash = new Button("⟲");
+    refreshDash.setStyle("-fx-font-size: 16; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-font-family: 'Poppins';");
+    refreshDash.setOnAction(e -> showDashboardHome());
+    titleRow.getChildren().addAll(title, refreshDash);
+    home.getChildren().add(titleRow);
 
         // Query DB for values and charts
         try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
@@ -1209,7 +1274,7 @@ public class AdminDashboardController {
                 javax.imageio.ImageIO.write(bImg, "png", baos);
                 baos.flush();
                 byte[] pngBytes = baos.toByteArray();
-                try (java.io.FileOutputStream fos = new java.io.FileOutputStream("overview_export.pdf")) {
+                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(util.InvoiceExporter.resolveAdminExportPath("overview_export.pdf"))) {
                     // Create an A4 PDF and scale the snapshot to fill the page while preserving aspect ratio
                     com.itextpdf.text.Rectangle a4 = com.itextpdf.text.PageSize.A4;
                     com.itextpdf.text.Document doc = new com.itextpdf.text.Document(a4, 18, 18, 18, 18);
@@ -1320,7 +1385,12 @@ public class AdminDashboardController {
             TableColumn<java.util.Map<String,Object>, String> ccustName = new TableColumn<>("Customer Name");
             ccustName.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("customer_name"))));
             TableColumn<java.util.Map<String,Object>, String> ccaption = new TableColumn<>("Caption");
-            ccaption.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cd.getValue().get("caption"))));
+            ccaption.setCellValueFactory(cd -> {
+                Object v = cd.getValue().get("caption");
+                String s = (v == null) ? "-" : String.valueOf(v);
+                if (s == null || "null".equals(s) || s.trim().isEmpty()) s = "-";
+                return new javafx.beans.property.SimpleStringProperty(s);
+            });
             javafx.collections.ObservableList<javafx.scene.control.TableColumn<java.util.Map<String,Object>, ?>> salesCols = javafx.collections.FXCollections.observableArrayList();
             salesCols.add(cid); salesCols.add(ctime); salesCols.add(ccash); salesCols.add(csales); salesCols.add(ctax); salesCols.add(cdisc); salesCols.add(ctotal); salesCols.add(ccustId); salesCols.add(ccustName);
             salesCols.add(ccaption);
@@ -1416,7 +1486,9 @@ public class AdminDashboardController {
             Button expCsv = new Button("Export CSV");
             Button expPdf = new Button("Export PDF");
             Button expXlsx = new Button("Export XLSX");
-            actions.getChildren().addAll(expCsv, expPdf, expXlsx);
+            Button refresh = new Button("⟲"); refresh.setStyle("-fx-font-size: 16; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-font-family: 'Poppins';");
+            refresh.setOnAction(ev -> showSalesReport());
+            actions.getChildren().addAll(expCsv, expPdf, expXlsx, refresh);
             root.getChildren().add(0, actions);
             // export filenames should include admin username and role, e.g. sales_report_Prajjwal_admin
             String adminName = null;
@@ -1509,15 +1581,21 @@ public class AdminDashboardController {
                 invActions.getChildren().addAll(invCsv, invPdf, invXlsx);
                 invCsv.setOnAction(ev -> {
                     String sfx = computeExportSuffixForSales(salesId);
-                    util.InvoiceExporter.exportInvoiceToCsv(salesId, "invoice_" + salesId + sfx + ".csv");
+                    String fname = "invoice_" + salesId + sfx + ".csv";
+                    String out = util.InvoiceExporter.resolveAdminExportPath(fname);
+                    util.InvoiceExporter.exportInvoiceToCsvToPath(salesId, out);
                 });
                 invPdf.setOnAction(ev -> {
                     String sfx = computeExportSuffixForSales(salesId);
-                    util.InvoiceExporter.exportInvoiceToPdf(salesId, "invoice_" + salesId + sfx + ".pdf");
+                    String fname = "invoice_" + salesId + sfx + ".pdf";
+                    String out = util.InvoiceExporter.resolveAdminExportPath(fname);
+                    util.InvoiceExporter.exportInvoiceToPdfToPath(salesId, out);
                 });
                 invXlsx.setOnAction(ev -> {
                     String sfx = computeExportSuffixForSales(salesId);
-                    util.InvoiceExporter.exportInvoiceToXlsx(salesId, "invoice_" + salesId + sfx + ".xlsx");
+                    String fname = "invoice_" + salesId + sfx + ".xlsx";
+                    String out = util.InvoiceExporter.resolveAdminExportPath(fname);
+                    util.InvoiceExporter.exportInvoiceToXlsxToPath(salesId, out);
                 });
                 root.getChildren().addAll(invActions, tbl);
                 // add main_sales summary below product table
@@ -1711,7 +1789,11 @@ public class AdminDashboardController {
         Button refreshBtn = new Button("⟲");
         refreshBtn.setStyle("-fx-font-size: 16; -fx-background-color: #b8c1ec; -fx-text-fill: #232946; -fx-background-radius: 8; -fx-font-family: 'Poppins';");
         refreshBtn.setOnAction(e -> {
-            // refresh product list without changing button appearance
+            // refresh product list and reset search box
+            try {
+                searchField.clear();
+                searchField.requestFocus();
+            } catch (Exception ignored) {}
             loadAllProducts();
             updateProductTable(allProducts);
         });
@@ -1838,17 +1920,16 @@ public class AdminDashboardController {
 
         // wire product export handlers
         prodCsv.setOnAction(ev -> {
-            // simple CSV using productTable data
-            try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.File("products.csv"))) {
-                pw.println("Product ID,Product Name,Category,Price,Stock Qty,Unit,Total Amount");
-                for (Product p : productTable.getItems()) {
-                    pw.println(String.format("%s,%s,%s,%.2f,%d,%s,%.2f", p.productId.replaceAll(",", ""), p.productName.replaceAll(",", ""), p.category.replaceAll(",", ""), p.price, p.stockQuantity, p.unit.replaceAll(",", ""), p.totalAmount));
+            try {
+                String out = util.InvoiceExporter.resolveAdminExportPath("products.csv");
+                try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.File(out))) {
+                    pw.println("Product ID,Product Name,Category,Price,Stock Qty,Unit,Total Amount");
+                    for (Product p : productTable.getItems()) {
+                        pw.println(String.format("%s,%s,%s,%.2f,%d,%s,%.2f", p.productId.replaceAll(",", ""), p.productName.replaceAll(",", ""), p.category.replaceAll(",", ""), p.price, p.stockQuantity, p.unit.replaceAll(",", ""), p.totalAmount));
+                    }
                 }
-                showAlert("CSV exported to " + new java.io.File("products.csv").getAbsolutePath());
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                showAlert("CSV export failed: " + ex.getMessage());
-            }
+                showAlert("CSV exported to " + new java.io.File(out).getAbsolutePath());
+            } catch (Exception ex) { ex.printStackTrace(); showAlert("CSV export failed: " + ex.getMessage()); }
         });
         prodPdf.setOnAction(ev -> {
             // convert productTable to Map backed table and reuse PDF exporter
@@ -1865,7 +1946,7 @@ public class AdminDashboardController {
                 java.util.Map<String,Object> mm = new java.util.HashMap<>(); mm.put("product_id", p.productId); mm.put("product_name", p.productName); mm.put("category", p.category); mm.put("price", p.price); rows.add(mm);
             }
             m.setItems(rows);
-            exportTableToPdf(m, "products.pdf");
+            exportTableToPdf(m, util.InvoiceExporter.resolveAdminExportPath("products.pdf"));
         });
         prodXlsx.setOnAction(ev -> {
             TableView<java.util.Map<String,Object>> m = new TableView<>();
@@ -1881,7 +1962,7 @@ public class AdminDashboardController {
                 java.util.Map<String,Object> mm = new java.util.HashMap<>(); mm.put("product_id", p.productId); mm.put("product_name", p.productName); mm.put("category", p.category); mm.put("price", p.price); rows.add(mm);
             }
             m.setItems(rows);
-            exportTableToXlsx(m, "products.xlsx");
+            exportTableToXlsx(m, util.InvoiceExporter.resolveAdminExportPath("products.xlsx"));
         });
 
         // Search logic
@@ -2335,7 +2416,10 @@ public class AdminDashboardController {
     // CSV export with formatting and main_sales-aware column ordering
     private void exportTableToCsv(TableView<java.util.Map<String,Object>> table, String filename) {
         try {
-            java.io.File f = new java.io.File(filename);
+            // If caller passed an absolute path, use it; otherwise resolve into admin exports dir
+            java.io.File maybe = new java.io.File(filename);
+            String outPath = maybe.isAbsolute() ? filename : util.InvoiceExporter.resolveAdminExportPath(filename);
+            java.io.File f = new java.io.File(outPath);
             try (java.io.PrintWriter pw = new java.io.PrintWriter(f)) {
                 // detect if rows look like main_sales rows
                 boolean isMainSales = false;
@@ -2527,8 +2611,10 @@ public class AdminDashboardController {
                 }
             } catch (Exception ignored) {}
             for (int i = 0; i < headers.length; i++) sheet.autoSizeColumn(i);
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(filename)) { wb.write(fos); }
-            showAlert("XLSX exported to " + new java.io.File(filename).getAbsolutePath());
+            java.io.File maybe = new java.io.File(filename);
+            String outPath = maybe.isAbsolute() ? filename : util.InvoiceExporter.resolveAdminExportPath(filename);
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outPath)) { wb.write(fos); }
+            showAlert("XLSX exported to " + new java.io.File(outPath).getAbsolutePath());
         } catch (Exception ex) {
             ex.printStackTrace();
             showAlert("XLSX export failed: " + ex.getMessage());
@@ -2537,7 +2623,9 @@ public class AdminDashboardController {
 
     // PDF export using iText with formatted columns and main_sales awareness
     private void exportTableToPdf(TableView<java.util.Map<String,Object>> table, String filename) {
-        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(filename)) {
+    java.io.File maybe = new java.io.File(filename);
+    String outPath = maybe.isAbsolute() ? filename : util.InvoiceExporter.resolveAdminExportPath(filename);
+    try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outPath)) {
             com.itextpdf.text.Document doc = new com.itextpdf.text.Document();
             com.itextpdf.text.pdf.PdfWriter.getInstance(doc, fos);
             doc.open();
@@ -2588,7 +2676,7 @@ public class AdminDashboardController {
                     }
                 } catch (Exception ignored) {}
                 doc.close();
-            showAlert("PDF exported to " + new java.io.File(filename).getAbsolutePath());
+            showAlert("PDF exported to " + new java.io.File(outPath).getAbsolutePath());
         } catch (Exception ex) {
             ex.printStackTrace();
             showAlert("PDF export failed: " + ex.getMessage());
@@ -2620,12 +2708,12 @@ public class AdminDashboardController {
     }
 
     private void exportCustomerTableToCsv(TableView<Customer> table, String filename) {
-        try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.File(filename))) {
+        try (java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.File(util.InvoiceExporter.resolveAdminExportPath(filename)))) {
             pw.println("Customer ID,Name,Phone,Loyalty Points");
             for (Customer c : table.getItems()) {
                 pw.println(String.format("%s,%s,%s,%d", c.cId, c.customerName.replaceAll(",", ""), c.phoneNo.replaceAll(",", ""), c.loyaltyPoints));
             }
-            showAlert("CSV exported to " + new java.io.File(filename).getAbsolutePath());
+            showAlert("CSV exported to " + new java.io.File(util.InvoiceExporter.resolveAdminExportPath(filename)).getAbsolutePath());
         } catch (Exception ex) {
             ex.printStackTrace();
             showAlert("CSV export failed: " + ex.getMessage());
@@ -2717,7 +2805,7 @@ public class AdminDashboardController {
         Label title = new Label("Loyalty & Guidelines"); title.setStyle("-fx-font-size:18; -fx-font-weight:bold;");
         javafx.scene.control.Label body = new javafx.scene.control.Label();
         body.setWrapText(true);
-        body.setText("Loyalty Points mechanism:\n\n1 point = Rs 100 of items total (before tax/discount).\nIf a customer's existing loyalty points are >= 500 at the time of payment, the system will automatically redeem 500 points to apply an immediate Rs 1500 discount to the sale and record a caption \"Loyalty Point redeemed!(Discount Added: Rs 1500)\" on the invoice.\nEarned points from the current sale are computed as floor(items_total / 100) and added to the customer's balance after redemption is applied.\n\nPlease ensure customers are registered with a valid phone number to accrue or redeem points.");
+    body.setText("Loyalty Points mechanism:\n\n1 point = Rs 100 of items total (before tax/discount).\nIf a customer's existing loyalty points are >= 500 at the time of payment, the system will automatically redeem 500 points to apply an immediate Rs 1500 discount to the sale and record a caption \"Loyalty Point redeemed!(Discount Added: Rs 1500)\" on the invoice.\nEarned points from the current sale are computed as floor(items_total / 100) and added to the customer's balance after redemption is applied.\n\nDiscount overflow rule:\nIf a discount (manual or computed) exceeds the sum of the sale's items total plus tax (i.e., discount > sales_total + tax), the system will cap the effective discount so the payable amount never becomes negative. Any excess discount amount (discount - (sales_total + tax)) will be converted into loyalty points at the standard earn rate (1 point per Rs 100) and recorded on the invoice as a caption such as \"Excess discount converted to loyalty points\". This ensures payable amounts remain non-negative while preserving customer value via loyalty points.\n\nPlease ensure customers are registered with a valid phone number to accrue or redeem points.");
         box.getChildren().addAll(title, body);
         // Footer credit
         box.getChildren().add(createCopyrightNode());
@@ -2740,7 +2828,7 @@ public class AdminDashboardController {
         Label title = new Label("About Us"); title.setStyle("-fx-font-size:18; -fx-font-weight:bold;");
         javafx.scene.control.Label body = new javafx.scene.control.Label();
         body.setWrapText(true);
-        body.setText("Welcome to QuickMart.\n\nOur Mission:\nRevolutionize retail point-of-sale experiences with a modern JavaFX desktop app, leveraging JDBC for persistence, barcode scanning, PDF/XLSX/CSV export, and a simple loyalty program.\n\nTechnologies used: Java, JavaFX, JDBC, Apache POI (XLSX), iText (PDF), and a barcode scanner integration.\n\nTeam:\n- Prajjwal Maharjan (Lead Developer)\n- Rabin Pulami Magar\n- Durga Budha\n");
+    body.setText("Welcome to QuickMart.\n\nOur Mission:\nRevolutionize retail point-of-sale experiences with a modern JavaFX desktop app, leveraging JDBC for persistence, barcode scanning, PDF/XLSX/CSV export, and a simple loyalty program.\n\nTechnologies used: Java, JavaFX, JDBC. Key libraries include ZXing (barcode generation), Apache POI (XLSX), and iText (PDF).\n\nTeam:\n- Prajjwal Maharjan (Lead Developer)\n- Rabin Pulami Magar\n- Durga Budha\n");
         box.getChildren().addAll(title, body);
         box.getChildren().add(createCopyrightNode());
         mainContent.getChildren().setAll(createScrollable(box));

@@ -31,7 +31,8 @@ public class DatabaseConnection {
     }
 
     public static boolean validateUser(String username, String password) {
-        String query = "SELECT * FROM users WHERE username = ? AND password = ?";
+        // Use BINARY to enforce case-sensitive username comparison on MySQL
+        String query = "SELECT * FROM users WHERE BINARY username = ? AND password = ?";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, username);
@@ -45,7 +46,8 @@ public class DatabaseConnection {
     }
 
     public static String getUserRole(String username) {
-        String query = "SELECT role FROM users WHERE username = ?";
+        // Use BINARY so role lookup matches username case-sensitively
+        String query = "SELECT role FROM users WHERE BINARY username = ?";
         try (Connection connection = getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, username);

@@ -997,17 +997,23 @@ public class CashierDashboardController {
             DailyTxn sel = table.getSelectionModel().getSelectedItem();
             if (sel == null) { new Alert(Alert.AlertType.INFORMATION, "Select a transaction row first").showAndWait(); return; }
             String sfx = computeExportSuffixForSales(sel.getSaleId());
-            exportInvoiceToCsv(sel.getSaleId(), "invoice_" + sel.getSaleId() + sfx + ".csv");
+            String fname = "invoice_" + sel.getSaleId() + sfx + ".csv";
+            String out = util.InvoiceExporter.resolveCashierExportPath(fname);
+            util.InvoiceExporter.exportInvoiceToCsvToPath(sel.getSaleId(), out);
         });
         expPdf.setOnAction(e -> {
             DailyTxn sel = table.getSelectionModel().getSelectedItem(); if (sel == null) { new Alert(Alert.AlertType.INFORMATION, "Select a transaction row first").showAndWait(); return; }
             String sfxp = computeExportSuffixForSales(sel.getSaleId());
-            exportInvoiceToPdf(sel.getSaleId(), "invoice_" + sel.getSaleId() + sfxp + ".pdf");
+            String fnamep = "invoice_" + sel.getSaleId() + sfxp + ".pdf";
+            String outp = util.InvoiceExporter.resolveCashierExportPath(fnamep);
+            util.InvoiceExporter.exportInvoiceToPdfToPath(sel.getSaleId(), outp);
         });
         expXlsx.setOnAction(e -> {
             DailyTxn sel = table.getSelectionModel().getSelectedItem(); if (sel == null) { new Alert(Alert.AlertType.INFORMATION, "Select a transaction row first").showAndWait(); return; }
             String sfxx = computeExportSuffixForSales(sel.getSaleId());
-            exportInvoiceToXlsx(sel.getSaleId(), "invoice_" + sel.getSaleId() + sfxx + ".xlsx");
+            String fnamex = "invoice_" + sel.getSaleId() + sfxx + ".xlsx";
+            String outx = util.InvoiceExporter.resolveCashierExportPath(fnamex);
+            util.InvoiceExporter.exportInvoiceToXlsxToPath(sel.getSaleId(), outx);
         });
     }
 
@@ -1134,7 +1140,7 @@ public class CashierDashboardController {
         VBox box = new VBox(12); box.setStyle("-fx-padding:20; -fx-background-color:#fff;");
         Label title = new Label("Loyalty & Guidelines"); title.setStyle("-fx-font-size:18; -fx-font-weight:bold;");
         javafx.scene.control.Label body = new javafx.scene.control.Label(); body.setWrapText(true);
-        body.setText("Loyalty Points mechanism:\n\n1 point = Rs 100 of items total (before tax/discount). If a customer's existing loyalty points are >= 500 at the time of payment, the system will automatically redeem 500 points to apply an immediate Rs 1500 discount to the sale and record a caption \"Loyalty Point redeemed!(Discount Added: Rs 1500)\" on the invoice. Earned points from the current sale are computed as floor(items_total / 100) and added to the customer's balance after redemption is applied.");
+    body.setText("Loyalty Points mechanism:\n\n1 point = Rs 100 of items total (before tax/discount). If a customer's existing loyalty points are >= 500 at the time of payment, the system will automatically redeem 500 points to apply an immediate Rs 1500 discount to the sale and record a caption \"Loyalty Point redeemed!(Discount Added: Rs 1500)\" on the invoice. Earned points from the current sale are computed as floor(items_total / 100) and added to the customer's balance after redemption is applied.\n\nDiscount overflow rule:\nIf a discount (manual or computed) exceeds the sum of the sale's items total plus tax (i.e., discount > sales_total + tax), the system caps the effective discount so the payable amount never goes negative. Any excess discount is converted into loyalty points at 1 point per Rs 100 and recorded on the invoice as a caption such as \"Excess discount converted to loyalty points\". This preserves customer value without creating negative payable amounts.");
         box.getChildren().addAll(title, body);
         box.getChildren().add(createCopyrightNodeCashier());
         rightStack.getChildren().setAll(createScrollable(box));
@@ -1154,7 +1160,7 @@ public class CashierDashboardController {
         VBox box = new VBox(12); box.setStyle("-fx-padding:20; -fx-background-color:#fff;");
         Label title = new Label("About Us"); title.setStyle("-fx-font-size:18; -fx-font-weight:bold;");
         javafx.scene.control.Label body = new javafx.scene.control.Label(); body.setWrapText(true);
-        body.setText("Welcome to QuickMart (TransferMaster in project description).\n\nOur Mission:\nRevolutionize retail point-of-sale experiences with a modern JavaFX desktop app.\n\nTechnologies used: Java, JavaFX, JDBC, Apache POI (XLSX), iText (PDF), barcode scanning integration.\n\nTeam:\n- Prajjwal Maharjan (Lead Developer)\n- Rabin Pulami Magar\n- Durga Budha");
+    body.setText("Welcome to QuickMart (TransferMaster in project description).\n\nOur Mission:\nRevolutionize retail point-of-sale experiences with a modern JavaFX desktop app.\n\nTechnologies used: Java, JavaFX, JDBC. Key libraries include ZXing (barcode generation), Apache POI (XLSX), and iText (PDF).\n\nTeam:\n- Prajjwal Maharjan (Lead Developer)\n- Rabin Pulami Magar\n- Durga Budha");
         box.getChildren().addAll(title, body);
         box.getChildren().add(createCopyrightNodeCashier());
         rightStack.getChildren().setAll(createScrollable(box));

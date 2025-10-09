@@ -16,6 +16,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Screen;
+import javafx.geometry.Rectangle2D;
 import database.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -27,7 +29,39 @@ public class App extends Application {
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
+        // Attempt to set the application icon (title bar + taskbar).
+        // Many JavaFX runtimes decode PNG/JPG reliably; ICO is platform-specific and may not be supported.
+        try {
+            boolean iconSet = false;
+            java.io.InputStream icoIs = getClass().getResourceAsStream("/assets/logo.ico");
+            if (icoIs != null) {
+                try {
+                    Image icoImg = new Image(icoIs);
+                    // If width is <= 0 JavaFX likely couldn't decode ICO; treat as failure and fall back
+                    if (icoImg.getWidth() > 0) {
+                        primaryStage.getIcons().add(icoImg);
+                        iconSet = true;
+                    }
+                } catch (Exception ignored) {}
+                try { icoIs.close(); } catch (Exception ignored) {}
+            }
+            if (!iconSet) {
+                java.net.URL u = getClass().getResource("/assets/logo.png");
+                if (u != null) primaryStage.getIcons().add(new Image(u.toExternalForm()));
+            }
+        } catch (Exception ignored) {}
         showWelcomePage();
+    }
+
+    // Resize and position the stage to fill the usable screen area (excludes taskbar)
+    private void fitStageToVisualBounds(Stage stage) {
+        try {
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+            stage.setX(screenBounds.getMinX());
+            stage.setY(screenBounds.getMinY());
+            stage.setWidth(screenBounds.getWidth());
+            stage.setHeight(screenBounds.getHeight());
+        } catch (Exception ignored) {}
     }
 
     private void showWelcomePage() {
@@ -41,6 +75,8 @@ public class App extends Application {
             primaryStage.setTitle("Welcome to QuickMart");
             primaryStage.setScene(welcomeScene);
             primaryStage.show();
+            // ensure window fills usable screen area (keeps taskbar visible)
+            fitStageToVisualBounds(primaryStage);
 
                 // Set logo image
                 ImageView logoImageView = (ImageView) welcomeScene.lookup("#logoImageView");
@@ -68,6 +104,8 @@ public class App extends Application {
             primaryStage.setTitle("Login - QuickMart");
             primaryStage.setScene(loginScene);
             primaryStage.show();
+            // ensure window fills usable screen area (keeps taskbar visible)
+            fitStageToVisualBounds(primaryStage);
 
             // Handle login button click
             Button loginButton = (Button) loginScene.lookup("#loginButton");
@@ -110,7 +148,7 @@ public class App extends Application {
                     }
                     // Lookup user and role from DB instead of relying on hardcoded names
                     try (Connection conn = DatabaseConnection.getConnection()) {
-                        String q = "SELECT id, role FROM Users WHERE username = ?";
+                                    String q = "SELECT id, role FROM Users WHERE BINARY username = ?";
                         PreparedStatement ps = conn.prepareStatement(q);
                         ps.setString(1, username);
                         ResultSet rs = ps.executeQuery();
@@ -252,7 +290,8 @@ public class App extends Application {
 
     private void authenticateUser(String username, String password) {
         try (Connection connection = DatabaseConnection.getConnection()) {
-            String query = "SELECT * FROM Users WHERE username = ? AND password = ?";
+            // Use BINARY to enforce case-sensitive username matching
+            String query = "SELECT * FROM Users WHERE BINARY username = ? AND password = ?";
             PreparedStatement statement = connection.prepareStatement(query);
             statement.setString(1, username);
             statement.setString(2, password);
@@ -281,8 +320,9 @@ public class App extends Application {
             adminScene.getStylesheets().add(getClass().getResource("/css/styles.css").toExternalForm());
             primaryStage.setTitle("Admin Dashboard - QuickMart");
             primaryStage.setScene(adminScene);
-            primaryStage.setMaximized(true); // Maximized windowed mode
+            // Use visual bounds instead of maximized to keep taskbar visible
             primaryStage.show();
+            fitStageToVisualBounds(primaryStage);
 
             // Set profile photo, username, and role in the navbar
             controller.AdminDashboardController controller = loader.getController();
@@ -304,6 +344,8 @@ public class App extends Application {
             primaryStage.setTitle("Cashier Dashboard - QuickMart");
             primaryStage.setScene(cashierScene);
             primaryStage.show();
+            // ensure window fills usable screen area (keeps taskbar visible)
+            fitStageToVisualBounds(primaryStage);
             // You can add more logic here for cashier dashboard
                 try {
                 controller.CashierDashboardController cctrl = loader.getController();

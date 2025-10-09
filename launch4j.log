@@ -1,0 +1,33 @@
+
+
+Version:	3.50
+CmdLine:	E:\BIT_4th_Sem_Project_Java\QuickMart.exe --l4j-debug
+JNI:		No
+WOW64:		Yes
+Working dir:	E:\BIT_4th_Sem_Project_Java\.
+Requires JDK:	No
+Requires 64-Bit: No
+Java min ver:	
+Java max ver:	
+Substitute:	JAVA_HOME = 
+Substitute:	PATH = C:\Program Files (x86)\VMware\VMware Workstation\bin\;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Git\cmd;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\Program Files\Go\bin;C:\Program Files\nodejs\;C:\apache-maven-3.9.11\bin;C:\Program Files\Java\jdk-24\bin;E:\Python_Interpreter\Scripts\;E:\Python_Interpreter\;C:\Users\Prajjwal\AppData\Local\Programs\Python\Launcher\;C:\Users\Prajjwal\AppData\Local\Microsoft\WindowsApps;C:\Users\Prajjwal\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Prajjwal\go\bin;C:\Users\Prajjwal\AppData\Roaming\npm;C:\Program Files\Java\jdk-24\bin
+JRE paths:	;C:\Program Files (x86)\VMware\VMware Workstation\bin\;C:\Program Files\Common Files\Oracle\Java\javapath;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files\Git\cmd;C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR;C:\Program Files\Go\bin;C:\Program Files\nodejs\;C:\apache-maven-3.9.11\bin;C:\Program Files\Java\jdk-24\bin;E:\Python_Interpreter\Scripts\;E:\Python_Interpreter\;C:\Users\Prajjwal\AppData\Local\Programs\Python\Launcher\;C:\Users\Prajjwal\AppData\Local\Microsoft\WindowsApps;C:\Users\Prajjwal\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Prajjwal\go\bin;C:\Users\Prajjwal\AppData\Roaming\npm;C:\Program Files\Java\jdk-24\bin
+Check launcher:	C:\Program Files (x86)\VMware\VMware Workstation\bin\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Common Files\Oracle\Java\javapath\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\system32\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\Wbem\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\WindowsPowerShell\v1.0\bin\javaw.exe (not found)
+Check launcher:	C:\WINDOWS\System32\OpenSSH\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Git\cmd\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\NVIDIA Corporation\NVIDIA App\NvDLISR\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Go\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\nodejs\bin\javaw.exe (not found)
+Check launcher:	C:\apache-maven-3.9.11\bin\javaw.exe (not found)
+Check launcher:	C:\Program Files\Java\jdk-24\bin\javaw.exe (OK)
+Version string: 1.024.000_002 / 64-Bit (OK)
+Launcher:	C:\Program Files\Java\jdk-24\bin\javaw.exe
+Launcher args:	--module-path "C:\javafx-sdk-24.0.2\lib" --add-modules javafx.controls,javafx.fxml -jar "E:\BIT_4th_Sem_Project_Java\QuickMart.exe"
+Args length:	131/32768 chars
+Exit code:	0
