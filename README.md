@@ -34,7 +34,6 @@
   - **ZXing** – Barcode generation  
 
 - **Repository:** `Prajjwal-dev/QuickMart`  
-- **Repository ID:** _(Add ID if applicable)_
 
 ---
 
