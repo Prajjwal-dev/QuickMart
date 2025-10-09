@@ -33,7 +33,8 @@
 - **Libraries Used:**  
   - **Apache POI** – Excel spreadsheet export (XLSX)  
   - **iText** – PDF export  
-  - **ZXing** – Barcode generation  
+  - **ZXing** – Barcode generation
+  - **CSV Export** - `PrintWriter` helpers 
 
 - **Repository:** `Prajjwal-dev/QuickMart`  
 
