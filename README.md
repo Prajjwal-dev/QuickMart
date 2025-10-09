@@ -1,26 +1,28 @@
 # QuickMart 🛒💵
 
 ## Overview
-**QuickMart** is a JavaFX-based retail management system developed as a BIT 4th semester project. The system streamlines store operations by combining billing, inventory management, and a user-friendly interface. QuickMart helps retail managers and store owners efficiently handle sales, track stock, and generate reports in multiple formats.
+**QuickMart** is a JavaFX-based retail management system developed as a BIT 4th semester project. It streamlines store operations with billing, inventory management, and a user-friendly interface. QuickMart helps retail managers efficiently handle sales, track stock, and generate reports in multiple formats.
 
 ---
 
 ## Key Features
 
 - **Billing & Inventory Management** 💵📦  
-  Seamlessly manage sales transactions and inventory updates.  
+  Seamlessly manage sales transactions and stock updates.  
 
 - **Low-Stock Alerts** ⚠️  
   Get notified when product stock levels are low.  
 
 - **Barcode Support** 🔖  
-  Generate and scan barcodes via `controller.BarcodeManager` for faster product handling.  
+  Generate and scan barcodes via `controller.BarcodeManager`.  
 
 - **User-Friendly UI** 🎨  
-  Intuitive interface built with JavaFX components for easy navigation and data entry.  
+  Intuitive interface built with JavaFX components.  
 
-- **Export Functionality** 📝📊📑  
-  Export sales and inventory data in CSV, XLSX, and PDF formats for reporting and analysis.  
+- **Data Export Functionality** 📝📊📑  
+  - **CSV Export** using `PrintWriter` helpers  
+  - **Excel (XLSX) Export** using **Apache POI**  
+  - **PDF Export** using **iText**  
 
 ---
 
@@ -29,7 +31,7 @@
 - **Programming Language:** Java  
 - **Framework:** JavaFX  
 - **Libraries Used:**  
-  - **Apache POI** – Excel (XLSX) export  
+  - **Apache POI** – Excel spreadsheet export (XLSX)  
   - **iText** – PDF export  
   - **ZXing** – Barcode generation  
 
@@ -46,7 +48,10 @@
    Supports barcode generation and scanning via `controller.BarcodeManager`.  
 
 3. **Data Export Modules**  
-   Implements CSV, XLSX, and PDF exports using helper functions (`sanitizeForFilename`, `computeExportSuffixForSales`).  
+   - CSV exports using `PrintWriter`  
+   - XLSX exports using **Apache POI**  
+   - PDF exports using **iText**  
+   - Helpers for safe filenames (`sanitizeForFilename`, `computeExportSuffixForSales`)  
 
 4. **UI Components & Controls**  
    - `TableView` / `TableColumn` / `TableCell` for structured data display  
