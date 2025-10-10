@@ -2,6 +2,9 @@ TO use our app, Firstly Install XAMPP and then In SQl Code DO this operations
 
 Creation of Database:
 
+CREATE DATABASE quickmartdb;
+USE quickmartdb;
+
 CREATE TABLE users (
     id VARCHAR(10) PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
@@ -9,8 +12,6 @@ CREATE TABLE users (
     role ENUM('admin', 'cashier') NOT NULL
 );
 
-CREATE DATABASE quickmartdb;
-USE quickmartdb;
 
 -- Products Table
 CREATE TABLE Products (
