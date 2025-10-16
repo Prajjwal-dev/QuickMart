@@ -192,7 +192,7 @@ public class App extends Application {
                                         }
                                     });
                                 } else {
-                                    showAlert("Invalid Cashier ID. It must match the registered ID for this user and be in format C-4440.");
+                                    showAlert("Invalid Cashier ID. It must match the registered ID for this user and be in format C-XXXX.");
                                 }
                             });
                         } else {

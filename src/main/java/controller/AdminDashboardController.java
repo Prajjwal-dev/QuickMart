@@ -849,7 +849,9 @@ public class AdminDashboardController {
             HBox lowStockBox = new HBox(10);
             lowStockBox.setStyle("-fx-alignment: center-left;");
             ImageView lowStockImg = new ImageView();
-            lowStockImg.setFitWidth(28); lowStockImg.setFitHeight(28);
+            // increase size so any text within the image (if present) is readable in the dashboard
+            lowStockImg.setFitWidth(64); lowStockImg.setFitHeight(64);
+            lowStockImg.setPreserveRatio(true);
             // user can replace image later; keep placeholder transparent
             Label lowStockLabel = new Label("No low stock items.");
             lowStockLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14; -fx-text-fill: #333333;");
@@ -1657,19 +1659,29 @@ public class AdminDashboardController {
                     } catch (Exception ignored) {}
                 }
                 // Show main_sales meta info and populate mainSalesBox further
-                try (java.sql.PreparedStatement infoPs = conn.prepareStatement("SELECT cashier_id, sale_time FROM main_sales WHERE sales_id = ?")) {
+                // Try to populate cashier/customer/time but don't overwrite already-populated customer info
+                try (java.sql.PreparedStatement infoPs = conn.prepareStatement("SELECT cashier_id, sale_time, customer_id, customer_name FROM main_sales WHERE sales_id = ?")) {
                     infoPs.setLong(1, salesId);
                     java.sql.ResultSet infoRs = infoPs.executeQuery();
                         if (infoRs.next()) {
                             String cashier = infoRs.getString("cashier_id"); if (cashier == null) cashier = "-";
-                            String cid = "-";
-                            String cname = "Unknown";
+                            String cidVal = null;
+                            String cnameVal = null;
+                            try { cidVal = infoRs.getString("customer_id"); } catch (Exception ignored) {}
+                            try { cnameVal = infoRs.getString("customer_name"); } catch (Exception ignored) {}
                             try {
                                 if (mainSalesBox != null && mainSalesBox.getChildren().size() >= 8) {
                                     ((javafx.scene.control.Label)mainSalesBox.getChildren().get(4)).setText("Cashier: " + cashier);
-                                    ((javafx.scene.control.Label)mainSalesBox.getChildren().get(5)).setText("Customer ID: " + cid);
-                                    ((javafx.scene.control.Label)mainSalesBox.getChildren().get(6)).setText("Customer Name: " + cname);
-                                    ((javafx.scene.control.Label)mainSalesBox.getChildren().get(7)).setText("Sale Time: " + infoRs.getTimestamp("sale_time").toString());
+                                    // Only update customer labels if we actually have values from DB
+                                    if (cidVal != null && !cidVal.trim().isEmpty()) {
+                                        ((javafx.scene.control.Label)mainSalesBox.getChildren().get(5)).setText("Customer ID: " + cidVal);
+                                    }
+                                    if (cnameVal != null && !cnameVal.trim().isEmpty()) {
+                                        ((javafx.scene.control.Label)mainSalesBox.getChildren().get(6)).setText("Customer Name: " + cnameVal);
+                                    }
+                                    java.sql.Timestamp ts = null;
+                                    try { ts = infoRs.getTimestamp("sale_time"); } catch (Exception ignored) {}
+                                    if (ts != null) ((javafx.scene.control.Label)mainSalesBox.getChildren().get(7)).setText("Sale Time: " + ts.toString());
                                 }
                             } catch (Exception ignored) {}
                         }
@@ -1823,7 +1835,7 @@ public class AdminDashboardController {
         colName.setCellValueFactory(new PropertyValueFactory<>("productName"));
         TableColumn<Product, String> colCategory = new TableColumn<>("Category");
         colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
-        TableColumn<Product, Double> colPrice = new TableColumn<>("Price");
+    TableColumn<Product, Double> colPrice = new TableColumn<>("Selling Price");
         colPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
         TableColumn<Product, Double> colTotal = new TableColumn<>("Total Amount");
         colTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
@@ -1862,6 +1874,7 @@ public class AdminDashboardController {
                 box.setStyle("-fx-alignment: CENTER_LEFT;");
                 updateBtn.setOnAction(e -> {
                     Product product = getTableView().getItems().get(getIndex());
+                    // Open update dialog directly; any price-based confirmation will be shown inside the dialog when Confirm is clicked
                     showUpdateProductDialog(product);
                 });
                 deleteBtn.setOnAction(e -> {
@@ -2127,6 +2140,20 @@ public class AdminDashboardController {
                 showAlert("Please fill all fields.");
                 return;
             }
+            // Confirmation: if cost price is greater than selling price, warn the user
+            try {
+                double sp = Double.parseDouble(sellingPrice);
+                double cp = Double.parseDouble(costPrice);
+                if (cp > sp) {
+                    javafx.scene.control.Alert warn = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+                    warn.setHeaderText("Cost price is greater than selling price");
+                    warn.setContentText("The cost price (" + cp + ") is higher than the selling price (" + sp + "). Do you want to continue?");
+                    java.util.Optional<javafx.scene.control.ButtonType> r = warn.showAndWait();
+                    if (!r.isPresent() || r.get() != javafx.scene.control.ButtonType.OK) {
+                        return;
+                    }
+                }
+            } catch (NumberFormatException ignored) {}
             try {
                 String productId = "P" + String.format("%05d", new java.util.Random().nextInt(100000));
                 String barcode = productId;
@@ -2265,6 +2292,31 @@ public class AdminDashboardController {
                 showAlert("Please fill all fields.");
                 return;
             }
+            // Post-edit confirmation: only warn if user changed either selling or cost price AND the new cost > new selling price
+            boolean shouldWarn = false;
+            try {
+                double spNew = Double.parseDouble(sellingPrice);
+                double cpNew = Double.parseDouble(costPrice);
+                double spOld = product.price;
+                double cpOld = product.costPrice;
+                // consider changed when absolute difference > small epsilon to avoid floating point noise
+                double eps = 1e-6;
+                boolean changed = Math.abs(spNew - spOld) > eps || Math.abs(cpNew - cpOld) > eps;
+                if (changed && cpNew > spNew) {
+                    shouldWarn = true;
+                }
+            } catch (NumberFormatException ignored) {}
+
+            if (shouldWarn) {
+                javafx.scene.control.Alert warn = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
+                warn.setHeaderText("Cost price is greater than selling price");
+                warn.setContentText("The new cost price you entered is higher than the new selling price. Do you want to continue and save these changes?");
+                java.util.Optional<javafx.scene.control.ButtonType> r = warn.showAndWait();
+                if (!r.isPresent() || r.get() != javafx.scene.control.ButtonType.OK) {
+                    return;
+                }
+            }
+
             try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
                 String sql = "UPDATE Products SET product_name=?, category=?, price=?, cost_price=?, stock_quantity=?, unit=?, barcode=? WHERE product_id=?";
                 java.sql.PreparedStatement stmt = conn.prepareStatement(sql);

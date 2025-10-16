@@ -168,11 +168,13 @@ public class CashierDashboardController {
         // New Billing shows the POS pane and ensures search/scan controls are visible
         newBillingBtn.setOnAction(e -> {
             // ensure scanner/search controls visible for POS
+            // clear any previous transaction so New Billing always starts fresh (covers case when cashier navigates here after payment without clicking Done)
+            txnRows.clear();
+            txnHeader.setText("New Billing / POS");
             setPosControlsVisible(true);
             try { rightStack.getChildren().setAll(createScrollable(txnPane)); } catch (Exception ignore) { rightStack.getChildren().clear(); rightStack.getChildren().add(createScrollable(txnPane)); }
             welcomePane.setVisible(false); welcomePane.setManaged(false);
             txnPane.setVisible(true); txnPane.setManaged(true);
-            txnHeader.setText("New Billing / POS");
             try { setActiveSidebarButton(newBillingBtn); } catch (Exception ignored) {}
         });
 
@@ -1075,14 +1077,20 @@ public class CashierDashboardController {
     // Compute a sanitized filename suffix for a sales record. Prefer customer name, else cashier username+role.
     private String computeExportSuffixForSales(long salesId) {
         try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
-            java.sql.PreparedStatement ps = conn.prepareStatement("SELECT customer_name, cashier_id FROM main_sales WHERE sales_id = ? LIMIT 1");
+            java.sql.PreparedStatement ps = conn.prepareStatement("SELECT customer_id, customer_name, cashier_id FROM main_sales WHERE sales_id = ? LIMIT 1");
             ps.setLong(1, salesId);
             java.sql.ResultSet rs = ps.executeQuery();
             if (rs.next()) {
+                String custId = rs.getString("customer_id");
                 String cname = rs.getString("customer_name");
                 String cashierId = rs.getString("cashier_id");
+                // If customer name is present and not the placeholder 'Unknown', prefer it
                 if (cname != null && !cname.trim().isEmpty() && !cname.equalsIgnoreCase("Unknown")) {
                     return "_" + sanitizeForFilename(cname.trim()) + "_Customer";
+                }
+                // If customer_id was stored as placeholder '-', treat as unknown customer
+                if (custId != null && custId.trim().equals("-")) {
+                    return "_Unknown";
                 }
                 // fallback: lookup cashier username and role from users table
                 if (cashierId != null && !cashierId.trim().isEmpty()) {
@@ -1102,7 +1110,7 @@ public class CashierDashboardController {
                 }
             }
         } catch (Exception ignore) {}
-        return "_Unknown_Customer";
+        return "_Unknown";
     }
 
     // Centralized helper to show/hide POS controls (search field and scan button)

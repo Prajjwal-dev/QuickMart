@@ -314,11 +314,15 @@ public class InvoiceExporter {
             String customerId = null; String cashierId = null;
             if (rs.next()) { customerId = rs.getString("customer_id"); cashierId = rs.getString("cashier_id"); }
             java.io.File base;
-            // If there's a customer id and it's not placeholder, place in customers/<id>
-            if (customerId != null && !customerId.trim().isEmpty() && !customerId.equals("-") ) {
-                base = new java.io.File("exports" + java.io.File.separator + "customers" + java.io.File.separator + sanitize(customerId));
+            // If there's a customer id, place into customers folder. For unregistered sales customer_id is stored as "-"; treat those as Unknown customer folder.
+            if (customerId != null && !customerId.trim().isEmpty()) {
+                if (customerId.equals("-")) {
+                    base = new java.io.File("exports" + java.io.File.separator + "customers" + java.io.File.separator + "Unknown");
+                } else {
+                    base = new java.io.File("exports" + java.io.File.separator + "customers" + java.io.File.separator + sanitize(customerId));
+                }
             } else {
-                // If the cashier matches current system cashier id, place in cashier folder; else admin
+                // If no customer id, fallback to cashier or admin folders
                 String currentCashier = System.getProperty("cashier.id", "");
                 if (cashierId != null && !cashierId.trim().isEmpty() && cashierId.equals(currentCashier)) {
                     base = new java.io.File("exports" + java.io.File.separator + "cashier");
