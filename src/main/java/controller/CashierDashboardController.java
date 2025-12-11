@@ -510,6 +510,8 @@ public class CashierDashboardController {
                 java.sql.ResultSet gk = ms.getGeneratedKeys();
                 final long[] mainSalesIdArr = new long[] { -1 };
                 if (gk.next()) mainSalesIdArr[0] = gk.getLong(1);
+                // Prepare payable amount (default using current discount). This will be adjusted inside loyalty handling for registered customers.
+                java.math.BigDecimal payableBd = grossTotalBd.subtract(discountAmountBd).setScale(2, java.math.RoundingMode.HALF_UP);
 
                 // Loyalty handling: if registered customer, compute earned points, handle redemption, and convert any excess discount into loyalty points
                 if (customerId != null) {
@@ -560,7 +562,7 @@ public class CashierDashboardController {
                         // if discount >= grossTotal -> appliedDiscount = grossTotal (payable 0), remaining = discount - grossTotal -> convert remaining to points
                         java.math.BigDecimal appliedDiscount = discountAmountBd.min(grossTotalBd).setScale(2, java.math.RoundingMode.HALF_UP);
                         java.math.BigDecimal remaining = discountAmountBd.subtract(appliedDiscount).setScale(2, java.math.RoundingMode.HALF_UP);
-                        java.math.BigDecimal payableBd = grossTotalBd.subtract(appliedDiscount).setScale(2, java.math.RoundingMode.HALF_UP);
+                        payableBd = grossTotalBd.subtract(appliedDiscount).setScale(2, java.math.RoundingMode.HALF_UP);
 
                         // Guard against negative payable (shouldn't happen after min, but be safe)
                         if (payableBd.compareTo(java.math.BigDecimal.ZERO) < 0) {
@@ -602,6 +604,13 @@ public class CashierDashboardController {
                         }
                         // At this point we have updated main_sales.discount and customers.loyalty_points as required.
                     } catch (Exception lpEx) { lpEx.printStackTrace(); }
+                }
+
+                // Validate entered cash amount against payable (for Cash by Hand flow)
+                if (receivedBd.compareTo(payableBd) < 0) {
+                    new Alert(Alert.AlertType.WARNING, "Cash amount is less than total payable amount.").showAndWait();
+                    try { if (conn != null) conn.rollback(); } catch (Exception ignore) {}
+                    return;
                 }
 
                 // Insert sales detail rows and decrement product stock

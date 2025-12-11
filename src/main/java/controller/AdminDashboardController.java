@@ -760,6 +760,17 @@ public class AdminDashboardController {
         v.getChildren().addAll(new Label("Username"), user, new Label("Password"), pass, new Label("Role"), role, new HBox(8, ok, cancel));
         ok.setOnAction(e -> {
             try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
+                // Ensure username/password are unique among cashiers
+                try (java.sql.PreparedStatement dup = conn.prepareStatement("SELECT id FROM users WHERE role = 'cashier' AND (username = ? OR password = ?) LIMIT 1")) {
+                    dup.setString(1, user.getText() == null ? "" : user.getText().trim());
+                    dup.setString(2, pass.getText() == null ? "" : pass.getText());
+                    try (java.sql.ResultSet drr = dup.executeQuery()) {
+                        if (drr.next()) {
+                            new Alert(Alert.AlertType.ERROR, "Cashier username or password is already used.").showAndWait();
+                            return;
+                        }
+                    }
+                }
                 // auto-generate a user id (U + zero-padded 5 digit number)
                 String genId = "U" + String.format("%05d", new java.util.Random().nextInt(100000));
                 java.sql.PreparedStatement ps = conn.prepareStatement("INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)");
@@ -781,12 +792,29 @@ public class AdminDashboardController {
         v.getChildren().addAll(new Label("Username"), uname, new Label("Password"), pwd, new Label("Role"), role, new HBox(8, ok, cancel));
         ok.setOnAction(e -> {
             try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
+                String currentId = String.valueOf(m.get("id"));
+                // Check for duplicates among cashiers (exclude current user)
+                if (pwd.getText().trim().isEmpty()) {
+                    try (java.sql.PreparedStatement dup = conn.prepareStatement("SELECT id FROM users WHERE role = 'cashier' AND username = ? AND id <> ? LIMIT 1")) {
+                        dup.setString(1, uname.getText() == null ? "" : uname.getText().trim());
+                        dup.setString(2, currentId);
+                        try (java.sql.ResultSet dr = dup.executeQuery()) { if (dr.next()) { new Alert(Alert.AlertType.ERROR, "Username already used by another cashier").showAndWait(); return; } }
+                    }
+                } else {
+                    try (java.sql.PreparedStatement dup = conn.prepareStatement("SELECT id FROM users WHERE role = 'cashier' AND (username = ? OR password = ?) AND id <> ? LIMIT 1")) {
+                        dup.setString(1, uname.getText() == null ? "" : uname.getText().trim());
+                        dup.setString(2, pwd.getText());
+                        dup.setString(3, currentId);
+                        try (java.sql.ResultSet dr = dup.executeQuery()) { if (dr.next()) { new Alert(Alert.AlertType.ERROR, "Cashier username or password is already used.").showAndWait(); return; } }
+                    }
+                }
+
                 java.sql.PreparedStatement ps = conn.prepareStatement("UPDATE users SET username = ?, role = ? " + (pwd.getText().trim().isEmpty()?"":" , password = ? ") + " WHERE id = ?");
                 ps.setString(1, uname.getText());
                 ps.setString(2, role.getValue());
                 int idx = 3;
                 if (!pwd.getText().trim().isEmpty()) { ps.setString(idx++, pwd.getText()); }
-                ps.setString(idx, String.valueOf(m.get("id")));
+                ps.setString(idx, currentId);
                 ps.executeUpdate(); s.close(); showUserManagement();
             } catch (Exception ex) { ex.printStackTrace(); new Alert(Alert.AlertType.ERROR, "Failed to update").showAndWait(); }
         });
@@ -809,6 +837,17 @@ public class AdminDashboardController {
                 return;
             }
             try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
+                // Check for existing customer with same name or phone
+                try (java.sql.PreparedStatement dup = conn.prepareStatement("SELECT c_id FROM customers WHERE customer_name = ? OR phone_no = ? LIMIT 1")) {
+                    dup.setString(1, name.getText() == null ? "" : name.getText().trim());
+                    dup.setString(2, phoneVal);
+                    try (java.sql.ResultSet drr = dup.executeQuery()) {
+                        if (drr.next()) {
+                            new Alert(Alert.AlertType.ERROR, "Customer username or phone number already exists.").showAndWait();
+                            return;
+                        }
+                    }
+                }
                 String id = "C" + String.format("%05d", new java.util.Random().nextInt(100000));
                 java.sql.PreparedStatement ps = conn.prepareStatement("INSERT INTO customers (c_id, customer_name, phone_no) VALUES (?, ?, ?)");
                 ps.setString(1, id); ps.setString(2, name.getText()); ps.setString(3, phoneVal); ps.executeUpdate();
@@ -1737,6 +1776,19 @@ public class AdminDashboardController {
         v.getChildren().addAll(new Label("Name"), name, new Label("Phone"), phone, new HBox(8, ok, cancel));
         ok.setOnAction(e -> {
             try (java.sql.Connection conn = database.DatabaseConnection.getConnection()) {
+                // Check duplicate customer name or phone among other customers
+                try (java.sql.PreparedStatement dup = conn.prepareStatement("SELECT c_id FROM customers WHERE (customer_name = ? OR phone_no = ?) AND c_id <> ? LIMIT 1")) {
+                    dup.setString(1, name.getText() == null ? "" : name.getText().trim());
+                    dup.setString(2, phone.getText() == null ? "" : phone.getText().trim());
+                    dup.setString(3, c.cId);
+                    try (java.sql.ResultSet drr = dup.executeQuery()) {
+                        if (drr.next()) {
+                            new Alert(Alert.AlertType.ERROR, "Customer username or phone number already exists.").showAndWait();
+                            return;
+                        }
+                    }
+                }
+
                 java.sql.PreparedStatement ps = conn.prepareStatement("UPDATE customers SET customer_name=?, phone_no=? WHERE c_id=?");
                 ps.setString(1, name.getText()); ps.setString(2, phone.getText()); ps.setString(3, c.cId); ps.executeUpdate();
                 s.close();

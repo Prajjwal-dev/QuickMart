@@ -3,7 +3,7 @@
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
   <jar>E:\BIT_4th_Sem_Project_Java\out\artifacts\BIT_4th_Sem_Project_Java_jar\BIT_4th_Sem_Project_Java.jar</jar>
-  <outfile>E:\BIT_4th_Sem_Project_Java\QuickMart.exe</outfile>
+  <outfile>QuickMart.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>
   <chdir>.</chdir>
@@ -16,7 +16,7 @@
   <icon>E:\BIT_4th_Sem_Project_Java\src\main\resources\assets\logo.ico</icon>
   <jre>
     <path>%JAVA_HOME%;%PATH%</path>
-    <requiresJdk>false</requiresJdk>
+    <requiresJdk>true</requiresJdk>
     <requires64Bit>true</requires64Bit>
     <minVersion>25</minVersion>
     <maxVersion></maxVersion>
